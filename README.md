@@ -1,4 +1,4 @@
-# Mood Tracker - Mood Metrics
+# Mood Metrics
 A Mood Tracker with Sentiment Analysis
 
 ## About the Project  
