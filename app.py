@@ -98,7 +98,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown(f"<h1 style='text-align: center;'>MoodMetrics</h1>", unsafe_allow_html=True)
+st.markdown(f"<h1 style='text-align: center;'>Mood Metrics</h1>", unsafe_allow_html=True)
 st.markdown(f"<h3 style='text-align: center;'>✨Turning your feelings into insights.✨</h3>", unsafe_allow_html=True)
 
 st.button("Toggle Theme", on_click=toggle_theme)
@@ -202,6 +202,7 @@ if str(selected_date) in sentiment_records:
         st.success(f"Your average sentiment for {selected_date} is {sentiment_on_date}.")
     else:
         st.warning("No data available for the selected date.")
+
 
 
 
