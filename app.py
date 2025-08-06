@@ -1,4 +1,4 @@
-import streamlit as st
+import streamlit as st    
 from textblob import TextBlob
 import pandas as pd
 import plotly.express as px
@@ -202,6 +202,7 @@ if str(selected_date) in sentiment_records:
         st.success(f"Your average sentiment for {selected_date} is {sentiment_on_date}.")
     else:
         st.warning("No data available for the selected date.")
+
 
 
 
