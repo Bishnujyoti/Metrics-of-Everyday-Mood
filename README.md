@@ -13,7 +13,7 @@ Through this project, our team gained valuable experience in:
 - Sentiment analysis techniques using Python libraries.  
 - Building user-friendly and dynamic web applications with Streamlit.  
 - Data visualization using Plotly.  
-- Effective teamwork and code collaboration using GitHub.  
+- Effective teamwork and code collaboration using GitHub. 
 
 ### How We Built It  
 1. **Technology Stack**:  
