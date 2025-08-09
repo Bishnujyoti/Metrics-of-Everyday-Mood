@@ -1,7 +1,7 @@
 # Mood Metrics
 A Mood Tracker with Sentiment Analysis
 
-## About the Project  
+## About the Project 
 
 The **Mood Tracker with Sentiment Analysis** is a collaborative project designed to analyze user-provided text input and identify the sentiment behind it—whether Happy, Sad, or Neutral. The app also tracks and visualizes the frequency of each mood in real-time, providing insights into user emotions over time.  
 
