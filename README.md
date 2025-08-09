@@ -17,12 +17,12 @@ Through this project, our team gained valuable experience in:
 
 ### How We Built It  
 1. **Technology Stack**:  
-   - **Frontend**: Streamlit for interactive UI development.  
+   - **Frontend**: Streamlit for interactive UI development. 
    - **Backend**: Python with `TextBlob` for performing sentiment analysis.  
-   - **Visualization**: Plotly for creating interactive mood charts.  
+   - **Visualization**: Plotly for creating interactive mood charts. 
 
 2. **Team Workflow**:  
-   - Defined goals and features during brainstorming sessions.  
+   - Defined goals and features during brainstorming sessions. 
    - Divided tasks based on individual expertise—backend, frontend, and visualization.  
    - Used GitHub for version control and seamless integration of modules.  
 
