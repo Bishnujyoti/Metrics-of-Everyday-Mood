@@ -6,10 +6,11 @@ from datetime import datetime
 import json
 import os
 
+# ---------------------- ORIGINAL FUNCTIONS ----------------------
+
 def get_sentiment(text):
     blob = TextBlob(text)
     sentiment = blob.sentiment.polarity
-
     if sentiment > 0:
         return "Happy 😊"
     elif sentiment < 0:
@@ -49,13 +50,15 @@ def toggle_theme():
 def clear_input():
     st.session_state["input_text"] = ""
 
+# ---------------------- THEME COLORS ----------------------
+
 if st.session_state["theme"] == "dark":
     background_color = "#1E1E1E"
     text_color = "#FFFFFF"
     font_color = "#FFFFFF"
     secondary_background_color = "#252525"
-    axis_label_color = "#ffffff"  # Default axis label color (dark theme)
-    title_color = "#ffffff"  # Default title color (dark theme)
+    axis_label_color = "#ffffff"
+    title_color = "#ffffff"
     legend_label_color = "#ffffff"
     button_color = "background: linear-gradient(to right, #ff7e5f, #feb47b); color: white;"
 else:
@@ -63,147 +66,182 @@ else:
     text_color = "#000000"
     font_color = "#000000"
     secondary_background_color = "#F0f0f0"
-    axis_label_color = "#000000"  # Default axis label color (dark theme)
-    title_color = "#000000"  # Default title color (dark theme)
-    legend_label_color = "#000000"  
+    axis_label_color = "#000000"
+    title_color = "#000000"
+    legend_label_color = "#000000"
     button_color = "background: linear-gradient(to right, #4facfe, #00f2fe); color: black;"
+
+# ---------------------- TOP NAVIGATION BAR ---------------------- 
 
 st.markdown(f"""
     <style>
-        body {{
+        .nav-tabs {{
+            display: flex;
+            justify-content: center;
             background-color: {background_color};
-            color: {font_color};
+            border-bottom: 1px solid #555;
+            margin-bottom: 1rem;
         }}
-        .stTextArea textarea {{
+        .nav-tab {{
+            margin: 0 10px;
+            padding: 0.6rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            color: {text_color};
+            cursor: pointer;
+            transition: 0.2s;
+        }}
+        .nav-tab:hover {{
             background-color: {secondary_background_color};
-            color: {text_color};
         }}
-        .stButton>button {{
-            {button_color}
-            border: none;
-            border-radius: 8px;
-            padding: 0.5rem 1rem;
-            font-size: 1rem;
-            font-weight: bold;
-        }}
-        .stButton>button:hover {{
-            filter: brightness(1.2);
-        }}
-        .sentiment-result {{
-            font-size: 2rem;
-            font-weight: bold;
-            color: {text_color};
-            text-align: center;
+        .active-tab {{
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: white !important;
         }}
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown(f"<h1 style='text-align: center;'>Mood Metrics</h1>", unsafe_allow_html=True)
-st.markdown(f"<h3 style='text-align: center;'>✨Turning your feelings into insights.✨</h3>", unsafe_allow_html=True)
+tab1, tab2 = st.tabs(["🏠 Mood Tracker", "💞 Data Donation"])
 
-st.button("Toggle Theme", on_click=toggle_theme)
+# ---------------------- PAGE 1: MOOD TRACKER ----------------------
 
-st.button("Clear Input", on_click=clear_input)
+with tab1:
+    st.markdown(f"<h1 style='text-align: center;'>Mood Metrics</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='text-align: center;'>✨Turning your feelings into insights.✨</h3>", unsafe_allow_html=True)
 
-selected_date = st.date_input("Select Date", min_value=datetime(2025, 1, 1), max_value=datetime.today())
+    st.button("Toggle Theme", on_click=toggle_theme)
+    st.button("Clear Input", on_click=clear_input)
 
-st.session_state["selected_date"] = str(selected_date)
+    selected_date = st.date_input("Select Date", min_value=datetime(2025, 1, 1), max_value=datetime.today())
 
-if str(selected_date) not in sentiment_records:
-    sentiment_records[str(selected_date)] = {"Happy 😊": 0, "Sad 😢": 0, "Neutral 😐": 0}
+    st.session_state["selected_date"] = str(selected_date)
 
-save_sentiment_data(sentiment_records)
+    if str(selected_date) not in sentiment_records:
+        sentiment_records[str(selected_date)] = {"Happy 😊": 0, "Sad 😢": 0, "Neutral 😐": 0}
 
-col1, col2 = st.columns(2)
+    save_sentiment_data(sentiment_records)
 
-with col1:
-    st.markdown("### Enter Text Below:")
-    input_text = st.text_area("", height=150)
+    col1, col2 = st.columns(2)
 
-    
-    button = st.button("Analyze Sentiment")
+    with col1:
+        st.markdown("### Enter Text Below:")
+        input_text = st.text_area("", height=150)
 
-    if button:
-        if input_text:
-            sentiment = get_sentiment(input_text)
-            
-            sentiment_records[str(selected_date)][sentiment] += 1
-            
-            save_sentiment_data(sentiment_records)
-            
-            st.markdown(f"<div class='sentiment-result'>Sentiment: {sentiment}</div>", unsafe_allow_html=True)
+        button = st.button("Analyze Sentiment")
+
+        if button:
+            if input_text:
+                sentiment = get_sentiment(input_text)
+                sentiment_records[str(selected_date)][sentiment] += 1
+                save_sentiment_data(sentiment_records)
+                st.markdown(f"<div class='sentiment-result'>Sentiment: {sentiment}</div>", unsafe_allow_html=True)
+            else:
+                st.warning("Please enter some text.")
+
+    with col2:
+        st.markdown("### Mood Chart")
+
+        mood_data = pd.DataFrame(
+            {
+                "Mood": list(sentiment_records[str(selected_date)].keys()),
+                "Count": list(sentiment_records[str(selected_date)].values()),
+            }
+        )
+
+        fig = px.bar(
+            mood_data,
+            x="Mood",
+            y="Count",
+            title="Mood Sentiment Count",
+            color="Mood",
+            color_discrete_map={
+                "Happy 😊": "lightgreen",
+                "Sad 😢": "lightcoral",
+                "Neutral 😐": "lightskyblue",
+            },
+        )
+        fig.update_layout(
+            plot_bgcolor=background_color,
+            paper_bgcolor=background_color,
+            font_color=font_color,
+            title=dict(text="Mood Sentiment Count", font=dict(color=title_color)),
+            xaxis=dict(
+                color=axis_label_color,
+                title_font=dict(color=axis_label_color),
+                tickfont=dict(color=axis_label_color)
+            ),
+            yaxis=dict(
+                color=axis_label_color,
+                title_font=dict(color=axis_label_color),
+                tickfont=dict(color=axis_label_color)
+            ),
+            legend=dict(
+                font=dict(color=legend_label_color)
+            ),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("### Record Your Sentiment for the Day")
+
+    if str(selected_date) in sentiment_records:
+        sentiment_counts = sentiment_records[str(selected_date)]
+        total_sentiments = sum(sentiment_counts.values())
+
+        if total_sentiments > 0:
+            happy_percentage = (sentiment_counts["Happy 😊"] / total_sentiments) * 100
+            sad_percentage = (sentiment_counts["Sad 😢"] / total_sentiments) * 100
+            neutral_percentage = (sentiment_counts["Neutral 😐"] / total_sentiments) * 100
+
+            if happy_percentage > sad_percentage and happy_percentage > neutral_percentage:
+                sentiment_on_date = "Happy 😊"
+            elif sad_percentage > happy_percentage and sad_percentage > neutral_percentage:
+                sentiment_on_date = "Sad 😢"
+            else:
+                sentiment_on_date = "Neutral 😐"
+
+            st.success(f"Your average sentiment for {selected_date} is {sentiment_on_date}.")
         else:
-            st.warning("Please enter some text.")
+            st.warning("No data available for the selected date.")
 
-with col2:
-    st.markdown("### Mood Chart")
-    
-    
-    mood_data = pd.DataFrame(
-        {
-            "Mood": list(sentiment_records[str(selected_date)].keys()),
-            "Count": list(sentiment_records[str(selected_date)].values()),
-        }
-    )
 
-   
-    fig = px.bar(
-        mood_data,
-        x="Mood",
-        y="Count",
-        title="Mood Sentiment Count",
-        color="Mood",
-        color_discrete_map={
-            "Happy 😊": "lightgreen",
-            "Sad 😢": "lightcoral",
-            "Neutral 😐": "lightskyblue",
-        },
-    )
-    fig.update_layout(
-        plot_bgcolor=background_color,
-        paper_bgcolor=background_color,
-        font_color=font_color,
-        title=dict(text="Mood Sentiment Count", font=dict(color=title_color)),
-        xaxis=dict(
-        color=axis_label_color,
-        title_font=dict(color=axis_label_color),
-        tickfont=dict(color=axis_label_color)
-    ),
-    yaxis=dict(
-        color=axis_label_color,
-        title_font=dict(color=axis_label_color),
-        tickfont=dict(color=axis_label_color)
-    ),
-    legend=dict(
-        font=dict(color=legend_label_color)
-    ),
-    )
-    st.plotly_chart(fig, use_container_width=True)
+# ---------------------- PAGE 2: DATA DONATION ----------------------
 
-st.markdown("### Record Your Sentiment for the Day")
+with tab2:
+    st.markdown("## 💞 Help Improve Mood Metrics")
+    st.markdown("""
+        <div style='
+            padding: 15px;
+            background-color: #fff3cd;
+            border: 2px solid #ffecb5;
+            border-radius: 10px;
+            color: #856404;
+            font-weight: bold;
+        '>
+        ⚠️ <b>Important Notice:</b><br>
+        Your donation entries will be <u>read by developers</u> to help improve the mood model.<br>
+        However, your data will remain <u>strictly confidential</u> and <u>never shared publicly</u>.
+        </div>
+    """, unsafe_allow_html=True)
 
-if str(selected_date) in sentiment_records:
-    sentiment_counts = sentiment_records[str(selected_date)]
-    total_sentiments = sum(sentiment_counts.values())
-    
-    if total_sentiments > 0:
-        happy_percentage = (sentiment_counts["Happy 😊"] / total_sentiments) * 100
-        sad_percentage = (sentiment_counts["Sad 😢"] / total_sentiments) * 100
-        neutral_percentage = (sentiment_counts["Neutral 😐"] / total_sentiments) * 100
-        
-        
-        if happy_percentage > sad_percentage and happy_percentage > neutral_percentage:
-            sentiment_on_date = "Happy 😊"
-        elif sad_percentage > happy_percentage and sad_percentage > neutral_percentage:
-            sentiment_on_date = "Sad 😢"
+    mood_text = st.text_area("💬 Write about your current mood or thoughts you'd like to share:")
+
+    if st.button("Submit Entry 💖"):
+        if mood_text.strip():
+            data_file = "donations.json"
+            data = {}
+            if os.path.exists(data_file):
+                with open(data_file, "r") as f:
+                    data = json.load(f)
+            entry = {
+                "text": mood_text,
+                "sentiment": get_sentiment(mood_text),
+                "date": str(datetime.today().date())
+            }
+            if "entries" not in data:
+                data["entries"] = []
+            data["entries"].append(entry)
+            with open(data_file, "w") as f:
+                json.dump(data, f, indent=4)
+            st.success("Thank you for helping improve Mood Metrics 💖 Your entry has been recorded securely.")
         else:
-            sentiment_on_date = "Neutral 😐"
-        
-        st.success(f"Your average sentiment for {selected_date} is {sentiment_on_date}.")
-    else:
-        st.warning("No data available for the selected date.")
-
-
-
-
-
+            st.warning("Please write something before submitting.")
