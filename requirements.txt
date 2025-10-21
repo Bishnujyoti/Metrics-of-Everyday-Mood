@@ -1,4 +1,8 @@
 streamlit
-textblob 
-plotly
+streamlit-lottie
 pandas
+plotly
+textblob
+transformers
+torch
+requests
