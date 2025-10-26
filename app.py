@@ -1,64 +1,59 @@
 import streamlit as st
-from textblob import TextBlob
+from transformers import pipeline
+from streamlit_lottie import st_lottie
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
-import json, os, random
-from transformers import pipeline
-from streamlit_lottie import st_lottie
+import json, random, os
 
-# Load Lottie Animation 🐶 (local file)
+# --------------------------
+# Load Dog Animation (local)
+# --------------------------
 with open("dog.json", "r") as f:
     dog_animation = json.load(f)
 
-# Load Sentiment Model
+# --------------------------
+# Load Sentiment Model (Roberta)
+# --------------------------
 @st.cache_resource
 def load_model():
     return pipeline("sentiment-analysis", model="cardiffnlp/twitter-roberta-base-sentiment")
 
 sentiment_model = load_model()
 
+# --------------------------
 # Sentiment Function
+# --------------------------
 def get_sentiment(text):
     result = sentiment_model(text)[0]
     label = result['label']
-    if label == "LABEL_2":  # Positive = return Happy 
+    if label == "LABEL_2":  # Positive
         return "Happy 😊"
-    elif label == "LABEL_0":  # Negative = return Sad
+    elif label == "LABEL_0":  # Negative
         return "Sad 😢"
     else:
-        return "Neutral 😐" # Neutral = return zero
+        return "Neutral 😐"
 
-# Config & Files
+# --------------------------
+# Streamlit Config
+# --------------------------
 st.set_page_config(page_title="Mood Metrics", page_icon="😊", layout="wide")
-SENTIMENT_FILE = "sentiment_data.json"
 
 if "theme" not in st.session_state:
     st.session_state["theme"] = "dark"
 
-def load_sentiment_data():
-    if os.path.exists(SENTIMENT_FILE):
-        with open(SENTIMENT_FILE, "r") as f:
-            return json.load(f)
-    else:
-        return {}
+if "sentiment_data" not in st.session_state:
+    st.session_state["sentiment_data"] = {}
 
-def save_sentiment_data(data):
-    with open(SENTIMENT_FILE, "w") as f:
-        json.dump(data, f)
-
-sentiment_records = load_sentiment_data()
-
-if "selected_date" not in st.session_state:
-    st.session_state["selected_date"] = str(datetime.today().date())
-
-if str(st.session_state["selected_date"]) not in sentiment_records:
-    sentiment_records[str(st.session_state["selected_date"])] = {"Happy 😊": 0, "Sad 😢": 0, "Neutral 😐": 0}
-
-# Themes
+# --------------------------
+# Theme Toggle
+# --------------------------
 def toggle_theme():
     st.session_state["theme"] = "light" if st.session_state["theme"] == "dark" else "dark"
 
+# --------------------------
+# Apply Styling
+# --------------------------
 if st.session_state["theme"] == "dark":
     background_color = "#1E1E1E"
     text_color = "#FFFFFF"
@@ -70,7 +65,6 @@ else:
     secondary_background_color = "#F0f0f0"
     button_color = "background: linear-gradient(to right, #4facfe, #00f2fe); color: black;"
 
-# Styling
 st.markdown(f"""
     <style>
         body {{
@@ -94,44 +88,45 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# Navigation Tabs
+# --------------------------
+# Tabs
+# --------------------------
 tab1, tab2 = st.tabs(["🏠 Home", "💞 Data Donation"])
 
+# --------------------------
 # HOME TAB
+# --------------------------
 with tab1:
     st.markdown(f"<h1 style='text-align: center;'>Mood Metrics</h1>", unsafe_allow_html=True)
     st.markdown(f"<h3 style='text-align: center;'>✨ Turning your feelings into insights ✨</h3>", unsafe_allow_html=True)
 
     st.button("Toggle Theme", on_click=toggle_theme)
-    
+
+    # Select Date
     selected_date = st.date_input("Select Date", min_value=datetime(2025, 1, 1), max_value=datetime.today())
-    st.session_state["selected_date"] = str(selected_date)
-    
-    if str(selected_date) not in sentiment_records:
-        sentiment_records[str(selected_date)] = {"Happy 😊": 0, "Sad 😢": 0, "Neutral 😐": 0}
-    
-    save_sentiment_data(sentiment_records)
-    
+    date_str = str(selected_date)
+
+    if date_str not in st.session_state["sentiment_data"]:
+        st.session_state["sentiment_data"][date_str] = {"Happy 😊": 0, "Sad 😢": 0, "Neutral 😐": 0}
+
+    # Input & Sentiment
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("### Enter Text Below:")
         input_text = st.text_area("", height=150)
-        
+
         if st.button("Analyze Sentiment"):
-            if input_text:
+            if input_text.strip():
                 sentiment = get_sentiment(input_text)
-                sentiment_records[str(selected_date)][sentiment] += 1
-                save_sentiment_data(sentiment_records)
+                st.session_state["sentiment_data"][date_str][sentiment] += 1
                 st.markdown(f"<div class='sentiment-result'>Sentiment: {sentiment}</div>", unsafe_allow_html=True)
             else:
                 st.warning("Please enter some text.")
-    
+
     with col2:
         st.markdown("### Mood Chart")
-        mood_data = pd.DataFrame({
-            "Mood": list(sentiment_records[str(selected_date)].keys()),
-            "Count": list(sentiment_records[str(selected_date)].values()),
-        })
+        data = st.session_state["sentiment_data"][date_str]
+        mood_data = pd.DataFrame({"Mood": list(data.keys()), "Count": list(data.values())})
         fig = px.bar(
             mood_data,
             x="Mood",
@@ -146,11 +141,11 @@ with tab1:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-    # 🐶 Mood Booster Section
-    st.markdown("### 🌸 Mood Booster")
+    # 🐶 Mood Booster
+    st.markdown("### 🐾 Mood Booster")
     st_lottie(dog_animation, height=180, key="dog")
 
-    if st.button("🐾 Cheer Me Up!"):
+    if st.button("💖 Cheer Me Up!"):
         messages = [
             "You're doing amazing, even if you don't see it yet 💪",
             "Drink some water, your brain will thank you 💧",
@@ -162,34 +157,40 @@ with tab1:
         ]
         st.success(random.choice(messages))
 
-    # Daily Summary
+    # Summary
     st.markdown("### Record Your Sentiment for the Day")
-    if str(selected_date) in sentiment_records:
-        sentiment_counts = sentiment_records[str(selected_date)]
-        total_sentiments = sum(sentiment_counts.values())
-        
-        if total_sentiments > 0:
-            happy_percentage = (sentiment_counts["Happy 😊"] / total_sentiments) * 100
-            sad_percentage = (sentiment_counts["Sad 😢"] / total_sentiments) * 100
-            neutral_percentage = (sentiment_counts["Neutral 😐"] / total_sentiments) * 100
-            
-            if happy_percentage > sad_percentage and happy_percentage > neutral_percentage:
-                sentiment_on_date = "Happy 😊"
-            elif sad_percentage > happy_percentage and sad_percentage > neutral_percentage:
-                sentiment_on_date = "Sad 😢"
-            else:
-                sentiment_on_date = "Neutral 😐"
-            
-            st.success(f"Your average sentiment for {selected_date} is {sentiment_on_date}.")
-        else:
-            st.warning("No data available for the selected date.")
+    data = st.session_state["sentiment_data"][date_str]
+    total = sum(data.values())
+    if total > 0:
+        happy, sad, neutral = data["Happy 😊"], data["Sad 😢"], data["Neutral 😐"]
+        dominant = max(data, key=data.get)
+        st.success(f"Your average sentiment for {date_str} is {dominant}.")
+    else:
+        st.warning("No data available for the selected date.")
 
+    # Data Controls
+    st.markdown("### 📦 Manage Your Mood Data")
+    colA, colB = st.columns(2)
+    with colA:
+        if st.button("💾 Download My Data"):
+            json_data = json.dumps(st.session_state["sentiment_data"], indent=4)
+            st.download_button("Click to Download", data=json_data, file_name="my_mood_data.json", mime="application/json")
+
+    with colB:
+        uploaded_file = st.file_uploader("Upload Your Mood Data (JSON)", type=["json"])
+        if uploaded_file:
+            uploaded_data = json.load(uploaded_file)
+            st.session_state["sentiment_data"].update(uploaded_data)
+            st.success("✅ Data imported successfully!")
+
+# --------------------------
 # DATA DONATION TAB
+# --------------------------
 with tab2:
     st.markdown("<h2 style='text-align:center;'>💞 Data Donation</h2>", unsafe_allow_html=True)
-    st.warning("⚠️ Entries submitted here may be read by developers to improve the model, "
-               "but they will remain **strictly confidential** and **never shared publicly**.")
-    
+    st.warning("⚠️ Entries here may be **read by developers** to improve the model, "
+               "but will remain **strictly confidential** and **never shared publicly.**")
+
     donated_text = st.text_area("Share your mood entry to help improve Mood Metrics (optional):", height=200)
     if st.button("Donate My Entry"):
         if donated_text.strip():
